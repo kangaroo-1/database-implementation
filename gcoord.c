@@ -41,66 +41,85 @@ geocoord_in(PG_FUNCTION_ARGS)
 	// char *location;
 	// char *geoStr;
 	char locationBuffer[256];
-	char geoStrBuffer[50];
+	char buffer1[50];
+	char buffer2[20];
+	
+	// char longtitudeBuffer[20];
+	// char latitudeBuffer[20];
+	// char geoStrBuffer[50];
+
+
+	//for storing latitude and longitude
+
+
 
 	int i = 0;
-	int index = 0;
+	// int j = 0;
+	int location_index = 0;      // end index of location
 
-	GeoCoord *result;
-	result = (GeoCoord *) palloc(VARHDRSZ + 500);
+	int index2 = 0;      // end index of latitude
 
-	//find the index
+	GeoCoord *result = (GeoCoord *) palloc(VARHDRSZ + 500);
+	memset(locationBuffer, 0, sizeof(locationBuffer));
+	memset(buffer1, 0, sizeof(buffer1));
+	memset(buffer2, 0, sizeof(buffer2));
+
+	//find the location location_index
 	while (str[i] != '\0') {
 		if (str[i] == ',') {
-			index = i;
+			location_index = i;
 			break;
 		}
 		i++;
-		index++;
 	}
 
-	//copy location into the locationBuffer
-	strncpy(locationBuffer, str + 0, index - 0);
-	strncpy(geoStrBuffer, str + index + 1, strlen(str) - index);
-	locationBuffer[index] = '\0';
-	geoStrBuffer[strlen(str) - 1] = '\0';
+
+	//find latitude index
+	i++;
+	while (str[i] != '\0') {
+		if (str[i] == ',') {
+			index2 = i;
+			break;
+		}
+		i++;
+	}
+
+	//case: Melbourne,37.84°S 144.95°E, no comma
+	if (index2 == 0) {
+		i = location_index + 1;
+		while (str[i] != '\0')  {
+			if (str[i] == ' ')  {
+				index2 = i;
+				break;
+			}
+			i++;
+		}
+
+	}
 
 
 
-	
+	//copy strings into buffers
+	strncpy(locationBuffer, str + 0, location_index - 0);
+	strncpy(buffer1, str + location_index + 1, index2 - location_index);
+	strncpy(buffer2, str + index2 + 1, strlen(str) - index2);
+
+	locationBuffer[strlen(locationBuffer)] = '\0';
+	buffer1[strlen(buffer1)] = '\0';
+	buffer2[strlen(buffer2)] = '\0';
+
 	// ereport(ERROR,
 	// 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-	// 			 errmsg("location: %s", str)));
-	// if (sscanf(str, " ( %s , %s )", locationBuffer, geoStrBuffer) != 2)
-	// 	ereport(ERROR,
-	// 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-	// 			 errmsg("invalid input syntax for type %s: \"%s\"",
-	// 					"complex", str)));
-
-
-
-
+	// 			 errmsg("%s", buffer1)));
 	
-	// strncpy(locationBuffer, location, sizeof(location)-1);
-	// strncpy(geoStrBuffer, geoStr, sizeof(geoStr)-1);
-	// locationBuffer[sizeof(locationBuffer)-1] = '\0';
-	// geoStrBuffer[sizeof(geoStrBuffer)-1] = '\0';
-
-
-	
-	// GeoCoord    *result;
-
-	// if (sscanf(str, " ( %lf , %lf )", &x, &y) != 2)
-	// 	ereport(ERROR,
-	// 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-	// 			 errmsg("invalid input syntax for type %s: \"%s\"",
-	// 					"complex", str)));
-
 	
 	SET_VARSIZE(result, VARHDRSZ + 500);
-	memcpy(result->location, locationBuffer, sizeof(locationBuffer));
-	memcpy(result->latitude,  geoStrBuffer, sizeof(geoStrBuffer));
-	// memcpy(result->longtitude, longtitude, sizeof(longtitude));
+	memset(result->location, 0, 256);
+	memset(result->latitude, 0, 50);
+	memset(result->longtitude, 0, 50);
+	memcpy(result->location, locationBuffer, 256);
+	memcpy(result->latitude,  buffer1, 50);
+	memcpy(result->longtitude, buffer2, strlen(buffer2));
 	PG_RETURN_POINTER(result);
 }
 
@@ -111,7 +130,7 @@ geocoord_out(PG_FUNCTION_ARGS)
 {
 	GeoCoord    *geocoord= (GeoCoord *) PG_GETARG_POINTER(0);
 	char	   *result;
-	result = psprintf("location: %s | latitude: %s", geocoord->location, geocoord->latitude);
+	result = psprintf("location: %s | latitude: %s | longtitude: %s ", geocoord->location, geocoord->latitude, geocoord->longtitude);
 	PG_RETURN_CSTRING(result);
 }
 
