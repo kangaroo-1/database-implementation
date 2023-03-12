@@ -79,6 +79,26 @@ INSERT INTO test_complex VALUES (1, 'Melbourne,37.84°S 144.95°E');
 
 SELECT * FROM test_complex;
 
+CREATE FUNCTION geocoord_eq(geocoord, geocoord) RETURNS bool
+   AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OPERATOR = (
+   leftarg = geocoord, rightarg = geocoord, procedure = geocoord_eq,
+   commutator = = ,
+   -- leave out negator since we didn't create <> operator
+   -- negator = <> ,
+   restrict = eqsel, join = eqjoinsel
+);
+
+CREATE OPERATOR CLASS geocoord_op
+    DEFAULT FOR TYPE geocoord USING btree AS
+        OPERATOR        1       = ;
+
+
+INSERT INTO test_complex VALUES (2, 'San Francisco,39°N,122.42°W');
+INSERT INTO test_complex VALUES (3, 'San Francisco,37.77°N,122.42°W');
+
+SELECT * from test_complex where a = 'San Francisco,37.77°N,122.42°W';
 
 -- clean up the example
 DROP TABLE test_complex;

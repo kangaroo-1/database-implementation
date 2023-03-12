@@ -282,3 +282,17 @@ geocoord_out(PG_FUNCTION_ARGS)
 
 // 	PG_RETURN_INT32(complex_abs_cmp_internal(a, b));
 // }
+
+PG_FUNCTION_INFO_V1(geocoord_eq);
+
+Datum
+geocoord_eq(PG_FUNCTION_ARGS)
+{
+	GeoCoord    *a = (GeoCoord *) PG_GETARG_POINTER(0);
+	GeoCoord    *b = (GeoCoord *) PG_GETARG_POINTER(1);
+
+	int cmp = strcmp(a->location, b->location);
+
+
+	PG_RETURN_BOOL(cmp == 0);
+}
