@@ -9,6 +9,9 @@
 
 #include "postgres.h"
 #include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdbool.h>
 #include "fmgr.h"
 #include "libpq/pqformat.h"		/* needed for send/recv functions */
 
@@ -283,6 +286,72 @@ geocoord_out(PG_FUNCTION_ARGS)
 // 	PG_RETURN_INT32(complex_abs_cmp_internal(a, b));
 // }
 
+static int
+geocoord_cmp_internal(GeoCoord * a, GeoCoord * b)
+{
+	// int location_cmp = strcmp(a->location, b->location);
+	char a_latitude[20];
+	char b_latitude[20];
+	char a_longtitude[20];
+	char b_longtitude[20];
+
+	char a_latitude_buffer[20];
+	char b_latitude_buffer[20];
+	double a_latitude_value;
+	double b_latitude_value;
+
+	int i = 0;
+	char *ptr;
+	memcpy(a_latitude, a->latitude, 20);
+	memcpy(b_latitude, b->latitude, 20);
+	memcpy(a_longtitude, a->longtitude, 20);
+	memcpy(b_longtitude, b->longtitude, 20);
+
+
+
+
+	while (a_latitude[i] != '\0') {
+		if (isalpha(a_latitude[i]) < 0 || isdigit(a_latitude[i]) < 0) {
+			break;
+		}
+        i++;
+	}
+	i = i - 2;
+	strncpy(a_latitude_buffer, a_latitude + 0, i - 0);
+	a_latitude_value = strtod(a_latitude_buffer, &ptr);
+
+	i = 0;
+	while (b_latitude[i] != '\0') {
+		if (isalpha(b_latitude[i]) < 0 || isdigit(b_latitude[i]) < 0) {
+			break;
+		}
+        i++;
+	}
+	i = i - 2;
+	strncpy(b_latitude_buffer, b_latitude + 0, i - 0);
+	b_latitude_value = strtod(b_latitude_buffer, &ptr);
+
+	if (a_latitude_value == b_latitude_value) {
+		return 0;
+	}
+	else {
+		return 1;
+	}
+	
+}
+
+PG_FUNCTION_INFO_V1(geocoord_cmp);
+Datum
+geocoord_cmp(PG_FUNCTION_ARGS)
+{
+	GeoCoord    *a = (GeoCoord *) PG_GETARG_POINTER(0);
+	GeoCoord    *b = (GeoCoord *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_INT32(geocoord_cmp_internal(a, b));
+}
+
+
+
 PG_FUNCTION_INFO_V1(geocoord_eq);
 
 Datum
@@ -291,8 +360,9 @@ geocoord_eq(PG_FUNCTION_ARGS)
 	GeoCoord    *a = (GeoCoord *) PG_GETARG_POINTER(0);
 	GeoCoord    *b = (GeoCoord *) PG_GETARG_POINTER(1);
 
-	int cmp = strcmp(a->location, b->location);
+	// int location_cmp = strcmp(a->location, b->location);
+	
 
 
-	PG_RETURN_BOOL(cmp == 0);
+	PG_RETURN_BOOL(geocoord_cmp_internal(a, b) == 0);
 }

@@ -90,15 +90,22 @@ CREATE OPERATOR = (
    restrict = eqsel, join = eqjoinsel
 );
 
+
+-- create the support function too
+CREATE FUNCTION geocoord_cmp(GeoCoord, GeoCoord) RETURNS int4
+   AS '/localstorage/z5290566/postgresql-15.1/src/tutorial/gcoord' LANGUAGE C IMMUTABLE STRICT;
+
+
 CREATE OPERATOR CLASS geocoord_op
     DEFAULT FOR TYPE geocoord USING btree AS
-        OPERATOR        1       = ;
+        OPERATOR        1       = ,
+        FUNCTION        1       geocoord_cmp(GeoCoord, GeoCoord);
 
 
 INSERT INTO test_complex VALUES (2, 'San Francisco,39°N,122.42°W');
 INSERT INTO test_complex VALUES (3, 'San Francisco,37.77°N,122.42°W');
 
-SELECT * from test_complex where a = 'San Francisco,37.77°N,122.42°W';
+SELECT * from test_complex where a = 'Melbourne,37.840000°S 144.95°E';
 
 -- clean up the example
 DROP TABLE test_complex;
