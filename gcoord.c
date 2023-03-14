@@ -467,7 +467,39 @@ geocoord_cmp_internal(GeoCoord * a, GeoCoord * b)
 		return 0;
 	}
 	else {
-		return 1;
+		
+		//compare latitude first
+		if (a_latitude_value < b_latitude_value) {
+			return 1;
+		}
+		else if (a_latitude_value > b_latitude_value) {
+			return -1;
+		}
+		else if (a_latitude_dir > b_latitude_dir) {
+			return 1;
+		}
+		else if (a_latitude_dir < b_latitude_dir) {
+			return -1;
+		}
+		else if (a_longtitude_value < b_longtitude_value) {
+			return 1;
+		}
+		else if (a_longtitude_value > b_longtitude_value) {
+			return -1;
+		}
+		else if (a_longtitude_dir > b_longtitude_dir) {
+			return 1;
+		}
+		else if (a_longtitude_dir < b_longtitude_dir) {
+			return -1;
+		}
+		else {
+			return location_cmp;
+		}
+ 
+
+
+
 	}
 	
 }
