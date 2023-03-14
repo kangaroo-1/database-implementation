@@ -79,6 +79,7 @@ INSERT INTO test_complex VALUES (1, 'Melbourne,37.84°S 144.95°E');
 
 SELECT * FROM test_complex;
 
+
 CREATE FUNCTION geocoord_eq(geocoord, geocoord) RETURNS bool
    AS '/localstorage/z5290566/postgresql-15.1/src/tutorial/gcoord' LANGUAGE C IMMUTABLE STRICT;
 
@@ -105,7 +106,8 @@ CREATE OPERATOR CLASS geocoord_op
 INSERT INTO test_complex VALUES (2, 'San Francisco,39°N,122.42°W');
 INSERT INTO test_complex VALUES (3, 'San Francisco,37.77°N,122.42°W');
 
-SELECT * from test_complex where a = 'Melbourne,37.840000°S 144.95°E';
+SELECT * from test_complex where a = 'meLbouRne,37.840000°S 144.95°E';
+
 
 -- clean up the example
 DROP TABLE test_complex;

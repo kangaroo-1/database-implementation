@@ -20,10 +20,10 @@ PG_MODULE_MAGIC;
 typedef struct GeoCoord
 {
 	int32 length;
-	char data[10];
-	char location[256];
-	char latitude[50];
-	char longtitude[50];
+	// char location[256];
+	// char latitude[50];
+	// char longtitude[50];
+	char data[FLEXIBLE_ARRAY_MEMBER];
 
 }			GeoCoord;
 
@@ -32,97 +32,111 @@ typedef struct GeoCoord
  * Input/Output functions
  *****************************************************************************/
 
+//helper function to check if the inputs are valid
+
+
+
+
+
+
+
 PG_FUNCTION_INFO_V1(geocoord_in);
 
 Datum
 geocoord_in(PG_FUNCTION_ARGS)
 {
 	char *str = PG_GETARG_CSTRING(0);
+
+	//check the inputs and error handling
+
+
+
+	int len = strlen(str) + 1;
+	GeoCoord *result = (GeoCoord *) palloc(VARHDRSZ + len);
+	memset(result->data, 0, strlen(result->data));
+	SET_VARSIZE(result, VARHDRSZ + len);
+	memcpy(result->data, str, strlen(str));
+
+
+
+
+	// char locationBuffer[256];
+	// char buffer1[50];
+	// char buffer2[20];
 	
 
 
-	// char *location;
-	// char *geoStr;
-	char locationBuffer[256];
-	char buffer1[50];
-	char buffer2[20];
-	
-	// char longtitudeBuffer[20];
-	// char latitudeBuffer[20];
-	// char geoStrBuffer[50];
-
-
-	//for storing latitude and longitude
+	// //for storing latitude and longitude
 
 
 
-	int i = 0;
-	// int j = 0;
-	int location_index = 0;      // end index of location
+	// int i = 0;
+	// // int j = 0;
+	// int location_index = 0;      // end index of location
 
-	int index2 = 0;      // end index of latitude
+	// int index2 = 0;      // end index of latitude
 
-	GeoCoord *result = (GeoCoord *) palloc(VARHDRSZ + 500);
-	memset(locationBuffer, 0, sizeof(locationBuffer));
-	memset(buffer1, 0, sizeof(buffer1));
-	memset(buffer2, 0, sizeof(buffer2));
+	// GeoCoord *result = (GeoCoord *) palloc(VARHDRSZ + 500);
+	// memset(locationBuffer, 0, sizeof(locationBuffer));
+	// memset(buffer1, 0, sizeof(buffer1));
+	// memset(buffer2, 0, sizeof(buffer2));
 
-	//find the location location_index
-	while (str[i] != '\0') {
-		if (str[i] == ',') {
-			location_index = i;
-			break;
-		}
-		i++;
-	}
-
-
-	//find latitude index
-	i++;
-	while (str[i] != '\0') {
-		if (str[i] == ',') {
-			index2 = i;
-			break;
-		}
-		i++;
-	}
-
-	//case: Melbourne,37.84°S 144.95°E, no comma
-	if (index2 == 0) {
-		i = location_index + 1;
-		while (str[i] != '\0')  {
-			if (str[i] == ' ')  {
-				index2 = i;
-				break;
-			}
-			i++;
-		}
-
-	}
+	// //find the location location_index
+	// while (str[i] != '\0') {
+	// 	if (str[i] == ',') {
+	// 		location_index = i;
+	// 		break;
+	// 	}
+	// 	i++;
+	// }
 
 
+	// //find latitude index
+	// i++;
+	// while (str[i] != '\0') {
+	// 	if (str[i] == ',') {
+	// 		index2 = i;
+	// 		break;
+	// 	}
+	// 	i++;
+	// }
 
-	//copy strings into buffers
-	strncpy(locationBuffer, str + 0, location_index - 0);
-	strncpy(buffer1, str + location_index + 1, index2 - location_index);
-	strncpy(buffer2, str + index2 + 1, strlen(str) - index2);
+	// //case: Melbourne,37.84°S 144.95°E, no comma
+	// if (index2 == 0) {
+	// 	i = location_index + 1;
+	// 	while (str[i] != '\0')  {
+	// 		if (str[i] == ' ')  {
+	// 			index2 = i;
+	// 			break;
+	// 		}
+	// 		i++;
+	// 	}
 
-	locationBuffer[strlen(locationBuffer)] = '\0';
-	buffer1[strlen(buffer1)] = '\0';
-	buffer2[strlen(buffer2)] = '\0';
+	// }
 
-	// ereport(ERROR,
-	// 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-	// 			 errmsg("%s", buffer1)));
+
+
+	// //copy strings into buffers
+	// strncpy(locationBuffer, str + 0, location_index - 0);
+	// strncpy(buffer1, str + location_index + 1, index2 - location_index);
+	// strncpy(buffer2, str + index2 + 1, strlen(str) - index2);
+
+	// locationBuffer[strlen(locationBuffer)] = '\0';
+	// buffer1[strlen(buffer1)] = '\0';
+	// buffer2[strlen(buffer2)] = '\0';
+
+	// // ereport(ERROR,
+	// // 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+	// // 			 errmsg("%s", buffer1)));
 	
 	
-	SET_VARSIZE(result, VARHDRSZ + 500);
-	memset(result->location, 0, 256);
-	memset(result->latitude, 0, 50);
-	memset(result->longtitude, 0, 50);
-	memcpy(result->location, locationBuffer, 256);
-	memcpy(result->latitude,  buffer1, 50);
-	memcpy(result->longtitude, buffer2, strlen(buffer2));
+	// SET_VARSIZE(result, VARHDRSZ + 500);
+	// memset(result->location, 0, 256);
+	// memset(result->latitude, 0, 50);
+	// memset(result->longtitude, 0, 50);
+	// memcpy(result->location, locationBuffer, 256);
+	// memcpy(result->latitude,  buffer1, 50);
+	// memcpy(result->longtitude, buffer2, strlen(buffer2));
 	PG_RETURN_POINTER(result);
 }
 
@@ -133,7 +147,7 @@ geocoord_out(PG_FUNCTION_ARGS)
 {
 	GeoCoord    *geocoord= (GeoCoord *) PG_GETARG_POINTER(0);
 	char	   *result;
-	result = psprintf("location: %s | latitude: %s | longtitude: %s ", geocoord->location, geocoord->latitude, geocoord->longtitude);
+	result = psprintf("%s", geocoord->data);
 	PG_RETURN_CSTRING(result);
 }
 
@@ -289,49 +303,134 @@ geocoord_out(PG_FUNCTION_ARGS)
 static int
 geocoord_cmp_internal(GeoCoord * a, GeoCoord * b)
 {
-	// int location_cmp = strcmp(a->location, b->location);
+	char *a_buffer = a->data;
+	char *b_buffer = b->data;
+
+	//buffers
+	char a_location[256];
+	char b_location[256];
+	//for latitude
 	char a_latitude[20];
 	char b_latitude[20];
-	char a_longtitude[20];
-	char b_longtitude[20];
-
-	char a_latitude_buffer[20];
-	char b_latitude_buffer[20];
 	double a_latitude_value;
 	double b_latitude_value;
 
+	//for longtitude
+	char a_longtitude[20];
+	char b_longtitude[20];
+	double a_longtitude_value;
+	double b_longtitude_value;
+
+
 	int i = 0;
+	int index1 = 0;
+	int index2 = 0;
 	char *ptr;
-	memcpy(a_latitude, a->latitude, 20);
-	memcpy(b_latitude, b->latitude, 20);
-	memcpy(a_longtitude, a->longtitude, 20);
-	memcpy(b_longtitude, b->longtitude, 20);
+	int location_cmp;
+
+
+	memset(a_location, 0, 256);
+	memset(b_location, 0, 256);
+	memset(a_latitude, 0, 20);
+	memset(b_latitude, 0, 20);
+	memset(a_longtitude, 0, 20);
+	memset(b_longtitude, 0, 20);
 
 
 
-
-	while (a_latitude[i] != '\0') {
-		if (isalpha(a_latitude[i]) < 0 || isdigit(a_latitude[i]) < 0) {
+	//extract a 
+	//find the first index
+	while (a_buffer[i] != '\0') {
+		if (a_buffer[i] == ',') {
+			index1 = i;
 			break;
 		}
-        i++;
+		i++;
 	}
-	i = i - 2;
-	strncpy(a_latitude_buffer, a_latitude + 0, i - 0);
-	a_latitude_value = strtod(a_latitude_buffer, &ptr);
 
+	strncpy(a_location, a_buffer + 0, index1 - 0);
+
+	//find the second index
+	i++;
+	while (a_buffer[i] != '\0') {
+		if (a_buffer[i] == ',') {
+			index2 = i;
+			break;
+		}
+		i++;
+	}
+
+	if (index2 == 0) {
+		i = index1 + 1;
+		while (a_buffer[i] != '\0') {
+			if (a_buffer[i] == ' ') {
+				index2 = i;
+				break;
+			}
+			i++;
+		}
+	}
+
+	//copy string into the buffer
+	strncpy(a_location, a_buffer + 0, index1  - 0);
+	strncpy(a_latitude, a_buffer + index1+ 1, index2 - index1 - 1);
+	strncpy(a_longtitude, a_buffer + index2+ 1, strlen(a_buffer) - index2);
+	a_latitude_value = strtod(a_latitude, &ptr);
+	a_longtitude_value = strtod(a_longtitude, &ptr);
+
+
+
+
+	//extract b values
+	//find the first index
 	i = 0;
-	while (b_latitude[i] != '\0') {
-		if (isalpha(b_latitude[i]) < 0 || isdigit(b_latitude[i]) < 0) {
+	index1 = 0;
+	index2 = 0;
+	while (b_buffer[i] != '\0') {
+		if (b_buffer[i] == ',') {
+			index1 = i;
 			break;
 		}
-        i++;
+		i++;
 	}
-	i = i - 2;
-	strncpy(b_latitude_buffer, b_latitude + 0, i - 0);
-	b_latitude_value = strtod(b_latitude_buffer, &ptr);
 
-	if (a_latitude_value == b_latitude_value) {
+	strncpy(b_location, b_buffer + 0, index1 - 0);
+
+	//find the second index
+	i++;
+	while (b_buffer[i] != '\0') {
+		if (b_buffer[i] == ',') {
+			index2 = i;
+			break;
+		}
+		i++;
+	}
+
+	if (index2 == 0) {
+		i = index1 + 1;
+		while (b_buffer[i] != '\0') {
+			if (b_buffer[i] == ' ') {
+				index2 = i;
+				break;
+			}
+			i++;
+		}
+	}
+
+	//copy string into the buffer
+	strncpy(b_location, b_buffer + 0, index1  - 0);
+	strncpy(b_latitude, b_buffer + index1+ 1, index2 - index1 - 1);
+	strncpy(b_longtitude, b_buffer + index2+ 1, strlen(b_buffer) - index2);
+	b_latitude_value = strtod(b_latitude, &ptr);
+	b_longtitude_value = strtod(b_longtitude, &ptr);
+
+	//compare location
+	location_cmp = strcasecmp(a_location, b_location);
+	// ereport(ERROR,
+	// 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+	// 			 errmsg("error: %s | %s | %d", a_location, b_location, location_cmp)));
+
+	if (location_cmp == 0 && a_latitude_value == b_latitude_value && a_longtitude_value == b_longtitude_value) {
 		return 0;
 	}
 	else {
