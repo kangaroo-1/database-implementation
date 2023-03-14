@@ -314,13 +314,16 @@ geocoord_cmp_internal(GeoCoord * a, GeoCoord * b)
 	char b_latitude[20];
 	double a_latitude_value;
 	double b_latitude_value;
+	int a_latitude_dir;    // N:1,  S:0
+	int b_latitude_dir;
 
 	//for longtitude
 	char a_longtitude[20];
 	char b_longtitude[20];
 	double a_longtitude_value;
 	double b_longtitude_value;
-
+	int a_longtitude_dir;    // E:1 W:0
+	int b_longtitude_dir;
 
 	int i = 0;
 	int index1 = 0;
@@ -377,7 +380,37 @@ geocoord_cmp_internal(GeoCoord * a, GeoCoord * b)
 	strncpy(a_longtitude, a_buffer + index2+ 1, strlen(a_buffer) - index2);
 	a_latitude_value = strtod(a_latitude, &ptr);
 	a_longtitude_value = strtod(a_longtitude, &ptr);
+	if (a_latitude[strlen(a_latitude) - 1] == 'N') {
+		a_latitude_dir = 1;
+	}
+	else {
+		a_latitude_dir = 0;
+	}
 
+	if (b_latitude[strlen(b_latitude) - 1] == 'N') {
+		b_latitude_dir = 1;
+	}
+	else {
+		b_latitude_dir = 0;
+	}
+	
+	if (a_longtitude[strlen(a_longtitude) - 1] == 'E') {
+		a_longtitude_dir = 1;
+	}
+	else {
+		a_longtitude_dir = 0;
+	}
+
+	if (b_longtitude[strlen(b_longtitude) - 1] == 'E') {
+		b_longtitude_dir = 1;
+	}
+	else {
+		b_longtitude_dir = 0;
+	}
+
+	// ereport(ERROR,
+	// 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+	// 			 errmsg("error: %c  %d | %c %d | %d %d",  a_latitude[strlen(a_latitude) - 1], a_latitude_dir, a_longtitude[strlen(a_longtitude) - 1], a_longtitude_dir, b_latitude_dir, b_longtitude_dir)));
 
 
 
