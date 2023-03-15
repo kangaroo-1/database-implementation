@@ -75,13 +75,34 @@ CREATE TABLE test_complex (
 -- data for user-defined types are just strings in the proper textual
 -- representation.
 
-INSERT INTO test_complex VALUES (1, 'Melbourne,37.84°S 144.95°E');
+INSERT INTO test_complex VALUES (1, 'sydney,35.86°S,162.78°E');
 
 SELECT * FROM test_complex;
 
+-----------------------------
+-- Interfacing New Types with Indexes:
+--	We cannot define a secondary index (eg. a B-tree) over the new type
+--	yet. We need to create all the required operators and support
+--      functions, then we can make the operator class.
+-----------------------------
+
+-- first, define the required operators
 
 CREATE FUNCTION geocoord_eq(geocoord, geocoord) RETURNS bool
    AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION geocoord_gt(geocoord, geocoord) RETURNS bool
+   AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION geocoord_lt(geocoord, geocoord) RETURNS bool
+   AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION geocoord_ge(geocoord, geocoord) RETURNS bool
+   AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION geocoord_le(geocoord, geocoord) RETURNS bool
+   AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
+
 
 CREATE OPERATOR = (
    leftarg = geocoord, rightarg = geocoord, procedure = geocoord_eq,
@@ -91,22 +112,50 @@ CREATE OPERATOR = (
    restrict = eqsel, join = eqjoinsel
 );
 
+CREATE OPERATOR > (
+   leftarg = geocoord, rightarg = geocoord, procedure = geocoord_gt,
+   commutator = < , negator = <= ,
+   restrict = scalargtsel, join = scalargtjoinsel
+);
+
+CREATE OPERATOR < (
+   leftarg = geocoord, rightarg = geocoord, procedure = geocoord_lt,
+   commutator = > , negator = >= ,
+   restrict = scalargtsel, join = scalargtjoinsel
+);
+
+CREATE OPERATOR <= (
+   leftarg = geocoord, rightarg = geocoord, procedure = geocoord_le,
+   commutator = >= , negator = > ,
+   restrict = scalargtsel, join = scalargtjoinsel
+);
+
+CREATE OPERATOR >= (
+   leftarg = geocoord, rightarg = geocoord, procedure = geocoord_ge,
+   commutator = <= , negator = <,
+   restrict = scalargtsel, join = scalargtjoinsel
+);
+
+
 
 -- create the support function too
 CREATE FUNCTION geocoord_cmp(GeoCoord, GeoCoord) RETURNS int4
    AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
 
-
+-- now we can make the operator class
 CREATE OPERATOR CLASS geocoord_op
     DEFAULT FOR TYPE geocoord USING btree AS
-        OPERATOR        1       = ,
+        OPERATOR        1       < ,
+        OPERATOR        2       <= ,
+        OPERATOR        3       = ,
+        OPERATOR        4       >= ,
+        OPERATOR        5       > ,
         FUNCTION        1       geocoord_cmp(GeoCoord, GeoCoord);
 
 
-INSERT INTO test_complex VALUES (2, 'San Francisco,39°N,122.42°W');
-INSERT INTO test_complex VALUES (3, 'San Francisco,37.77°N,122.42°W');
+INSERT INTO test_complex VALUES (2, 'Sydney,35.86°S 150.21°E');
 
-SELECT * from test_complex where a = 'meLbouRne,37.840000°S 144.95°E';
+SELECT * from test_complex where a < 'Sydney,33.86°S,151.21°E';
 
 
 -- clean up the example

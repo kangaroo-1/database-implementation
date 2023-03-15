@@ -517,16 +517,59 @@ geocoord_cmp(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(geocoord_eq);
-
 Datum
 geocoord_eq(PG_FUNCTION_ARGS)
 {
 	GeoCoord    *a = (GeoCoord *) PG_GETARG_POINTER(0);
 	GeoCoord    *b = (GeoCoord *) PG_GETARG_POINTER(1);
 
-	// int location_cmp = strcmp(a->location, b->location);
-	
-
 
 	PG_RETURN_BOOL(geocoord_cmp_internal(a, b) == 0);
+}
+
+
+PG_FUNCTION_INFO_V1(geocoord_gt);
+Datum
+geocoord_gt(PG_FUNCTION_ARGS)
+{
+	GeoCoord    *a = (GeoCoord *) PG_GETARG_POINTER(0);
+	GeoCoord    *b = (GeoCoord *) PG_GETARG_POINTER(1);
+
+
+	PG_RETURN_BOOL(geocoord_cmp_internal(a, b) > 0);
+}
+
+
+PG_FUNCTION_INFO_V1(geocoord_lt);
+Datum
+geocoord_lt(PG_FUNCTION_ARGS)
+{
+	GeoCoord    *a = (GeoCoord *) PG_GETARG_POINTER(0);
+	GeoCoord    *b = (GeoCoord *) PG_GETARG_POINTER(1);
+
+
+	PG_RETURN_BOOL(geocoord_cmp_internal(a, b) < 0);
+}
+
+
+PG_FUNCTION_INFO_V1(geocoord_ge);
+Datum
+geocoord_ge(PG_FUNCTION_ARGS)
+{
+	GeoCoord    *a = (GeoCoord *) PG_GETARG_POINTER(0);
+	GeoCoord    *b = (GeoCoord *) PG_GETARG_POINTER(1);
+
+
+	PG_RETURN_BOOL(geocoord_cmp_internal(a, b) >= 0);
+}
+
+PG_FUNCTION_INFO_V1(geocoord_le);
+Datum
+geocoord_le(PG_FUNCTION_ARGS)
+{
+	GeoCoord    *a = (GeoCoord *) PG_GETARG_POINTER(0);
+	GeoCoord    *b = (GeoCoord *) PG_GETARG_POINTER(1);
+
+
+	PG_RETURN_BOOL(geocoord_cmp_internal(a, b) <= 0);
 }
