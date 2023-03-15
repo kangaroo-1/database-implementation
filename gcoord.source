@@ -75,7 +75,7 @@ CREATE TABLE test_complex (
 -- data for user-defined types are just strings in the proper textual
 -- representation.
 
-INSERT INTO test_complex VALUES (1, 'sydney,35.86°S,162.78°E');
+INSERT INTO test_complex VALUES (1, 'Alaska,70.2°S,144.0°W');
 
 SELECT * FROM test_complex;
 
@@ -101,6 +101,9 @@ CREATE FUNCTION geocoord_ge(geocoord, geocoord) RETURNS bool
    AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION geocoord_le(geocoord, geocoord) RETURNS bool
+   AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION geocoord_tz(geocoord, geocoord) RETURNS bool
    AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
 
 
@@ -136,6 +139,11 @@ CREATE OPERATOR >= (
    restrict = scalargtsel, join = scalargtjoinsel
 );
 
+CREATE OPERATOR ~ (
+   leftarg = geocoord, rightarg = geocoord, procedure = geocoord_tz,
+   commutator = ~,
+   restrict = eqsel, join = eqjoinsel
+);
 
 
 -- create the support function too
@@ -150,12 +158,14 @@ CREATE OPERATOR CLASS geocoord_op
         OPERATOR        3       = ,
         OPERATOR        4       >= ,
         OPERATOR        5       > ,
+        OPERATOR        6       ~ ,
         FUNCTION        1       geocoord_cmp(GeoCoord, GeoCoord);
 
 
-INSERT INTO test_complex VALUES (2, 'Sydney,35.86°S 150.21°E');
+INSERT INTO test_complex VALUES (2, 'Chuuk Islands,5.45°N,153.51°E');
+INSERT INTO test_complex VALUES (3, 'Melbourne,37.84°S,144.95°E');
 
-SELECT * from test_complex where a < 'Sydney,33.86°S,151.21°E';
+SELECT * from test_complex where a ~ 'Sydney,33.86°S,151.21°E';
 
 
 -- clean up the example

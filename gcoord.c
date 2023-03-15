@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <math.h>
 #include "fmgr.h"
 #include "libpq/pqformat.h"		/* needed for send/recv functions */
 
@@ -552,6 +553,7 @@ geocoord_lt(PG_FUNCTION_ARGS)
 }
 
 
+
 PG_FUNCTION_INFO_V1(geocoord_ge);
 Datum
 geocoord_ge(PG_FUNCTION_ARGS)
@@ -563,6 +565,8 @@ geocoord_ge(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(geocoord_cmp_internal(a, b) >= 0);
 }
 
+
+
 PG_FUNCTION_INFO_V1(geocoord_le);
 Datum
 geocoord_le(PG_FUNCTION_ARGS)
@@ -572,4 +576,62 @@ geocoord_le(PG_FUNCTION_ARGS)
 
 
 	PG_RETURN_BOOL(geocoord_cmp_internal(a, b) <= 0);
+}
+
+
+
+//time zone ~
+PG_FUNCTION_INFO_V1(geocoord_tz);
+Datum
+geocoord_tz(PG_FUNCTION_ARGS)
+{
+	GeoCoord    *a = (GeoCoord *) PG_GETARG_POINTER(0);
+	GeoCoord    *b = (GeoCoord *) PG_GETARG_POINTER(1);
+
+	char *a_buffer = a->data;
+	char *b_buffer = b->data;
+	char a_longtitude[20];
+	char b_longtitude[20];
+	double a_longtitude_value;
+	double b_longtitude_value;
+	double a_floor;
+	double b_floor;
+	
+	int i;
+	int index = 0;
+	char *ptr;
+
+
+	i = strlen(a_buffer) - 1;
+	while (i >= 0) {
+		if (a_buffer[i] == ',' || a_buffer[i] == ' ') {
+			index = i;
+			break;
+		}
+		i--;
+	}
+	strncpy(a_longtitude, a_buffer + index + 1, strlen(a_buffer) - index);
+	a_longtitude_value = strtod(a_longtitude, &ptr);
+	
+
+	i = strlen(b_buffer) - 1;
+	index = 0;
+	while (i >= 0) {
+		if (b_buffer[i] == ',' || b_buffer[i] == ' ') {
+			index = i;
+			break;
+		}
+		i--;
+	}
+	strncpy(b_longtitude, b_buffer + index + 1, strlen(b_buffer) - index);
+	b_longtitude_value = strtod(b_longtitude, &ptr);
+
+	a_longtitude_value = a_longtitude_value / 15;
+	b_longtitude_value = b_longtitude_value / 15;
+	a_floor = floor(a_longtitude_value);
+	b_floor = floor(b_longtitude_value);
+
+
+
+	PG_RETURN_BOOL(a_floor == b_floor);
 }
