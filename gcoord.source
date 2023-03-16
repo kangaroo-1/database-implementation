@@ -33,6 +33,7 @@
 -- (in memory) representation. You will get a message telling you 'complex'
 -- does not exist yet but that's okay.
 
+
 CREATE FUNCTION geocoord_in(cstring)
    RETURNS geocoord
    AS '_OBJWD_/gcoord'
@@ -75,7 +76,6 @@ CREATE TABLE test_complex (
 -- data for user-defined types are just strings in the proper textual
 -- representation.
 
-INSERT INTO test_complex VALUES (1, 'Alaska,70.2°S,144.0°W');
 
 SELECT * FROM test_complex;
 
@@ -150,6 +150,12 @@ CREATE OPERATOR ~ (
 CREATE FUNCTION geocoord_cmp(GeoCoord, GeoCoord) RETURNS int4
    AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
 
+
+CREATE FUNCTION convert2dms(GeoCoord) RETURNS text
+   AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
+
+SELECT convert2dms('sydney,33.86°S,151.21°E');
+
 -- now we can make the operator class
 CREATE OPERATOR CLASS geocoord_op
     DEFAULT FOR TYPE geocoord USING btree AS
@@ -158,16 +164,17 @@ CREATE OPERATOR CLASS geocoord_op
         OPERATOR        3       = ,
         OPERATOR        4       >= ,
         OPERATOR        5       > ,
-        OPERATOR        6       ~ ,
         FUNCTION        1       geocoord_cmp(GeoCoord, GeoCoord);
 
 
-INSERT INTO test_complex VALUES (2, 'Chuuk Islands,5.45°N,153.51°E');
-INSERT INTO test_complex VALUES (3, 'Melbourne,37.84°S,144.95°E');
+CREATE INDEX test_cplx_ind ON test_complex
+   USING btree(a geocoord_op);
 
-SELECT * from test_complex where a ~ 'Sydney,33.86°S,151.21°E';
+
+
+
+
+
 
 
 -- clean up the example
-DROP TABLE test_complex;
-DROP TYPE geocoord CASCADE;
