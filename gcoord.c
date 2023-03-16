@@ -475,6 +475,60 @@ geocoord_tz(PG_FUNCTION_ARGS)
 }
 
 
+
+PG_FUNCTION_INFO_V1(geocoord_tz_ne);
+Datum
+geocoord_tz_ne(PG_FUNCTION_ARGS)
+{
+	GeoCoord    *a = (GeoCoord *) PG_GETARG_POINTER(0);
+	GeoCoord    *b = (GeoCoord *) PG_GETARG_POINTER(1);
+
+	char *a_buffer = a->data;
+	char *b_buffer = b->data;
+	char a_longtitude[20];
+	char b_longtitude[20];
+	double a_longtitude_value;
+	double b_longtitude_value;
+	double a_floor;
+	double b_floor;
+	
+	int i;
+	int index = 0;
+	char *ptr;
+
+
+	i = strlen(a_buffer) - 1;
+	while (i >= 0) {
+		if (a_buffer[i] == ',' || a_buffer[i] == ' ') {
+			index = i;
+			break;
+		}
+		i--;
+	}
+	strncpy(a_longtitude, a_buffer + index + 1, strlen(a_buffer) - index);
+	a_longtitude_value = strtod(a_longtitude, &ptr);
+	
+
+	i = strlen(b_buffer) - 1;
+	index = 0;
+	while (i >= 0) {
+		if (b_buffer[i] == ',' || b_buffer[i] == ' ') {
+			index = i;
+			break;
+		}
+		i--;
+	}
+	strncpy(b_longtitude, b_buffer + index + 1, strlen(b_buffer) - index);
+	b_longtitude_value = strtod(b_longtitude, &ptr);
+
+	a_longtitude_value = a_longtitude_value / 15;
+	b_longtitude_value = b_longtitude_value / 15;
+	a_floor = floor(a_longtitude_value);
+	b_floor = floor(b_longtitude_value);
+
+	PG_RETURN_BOOL(a_floor != b_floor);
+}
+
 PG_FUNCTION_INFO_V1(convert2dms);
 
 Datum
@@ -620,13 +674,13 @@ convert2dms(PG_FUNCTION_ARGS)
 	strcat(new_str, a_latitude_d_buffer);
 	strcat(new_str, "°");
 
-	if (a_latitude_m != 0) {
+	if (floor_a_latitude_m != 0) {
 		snprintf(a_latitude_m_buffer, 10, "%.4f", floor_a_latitude_m);
 		strcat(new_str, a_latitude_m_buffer);
 		strcat(new_str, "\'");
 	}
 
-	if (a_latitude_s != 0) {
+	if (floor_a_latitude_s != 0) {
 		snprintf(a_latitude_s_buffer, 10, "%f", floor_a_latitude_s);
 		strcat(new_str, a_latitude_s_buffer);
 		strcat(new_str, "\"");
@@ -645,13 +699,13 @@ convert2dms(PG_FUNCTION_ARGS)
 	snprintf(a_longtitude_d_buffer, 10, "%.4f", a_longtitude_d);
 	strcat(new_str, a_longtitude_d_buffer);
 	strcat(new_str, "°");
-	if (a_longtitude_m != 0) {
+	if (floor_a_longtitude_m != 0) {
 		snprintf(a_longtitude_m_buffer, 10, "%.4f", floor_a_longtitude_m);
 		strcat(new_str, a_longtitude_m_buffer);
 		strcat(new_str, "\'");
 	}
 
-	if (a_longtitude_s != 0) {
+	if (floor_a_longtitude_s != 0) {
 		snprintf(a_longtitude_s_buffer, 10, "%.4f", floor_a_longtitude_s);
 		strcat(new_str, a_longtitude_s_buffer);
 		strcat(new_str, "\"");
@@ -667,15 +721,9 @@ convert2dms(PG_FUNCTION_ARGS)
 
 
 	
-
-
-// ereport(ERROR,
-// 	(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-//  	errmsg("error??: %s", new_str)));
-
 	len = strlen(new_str) + 1;
 	result = (GeoCoord *) palloc(VARHDRSZ + len);
-	memset(result->data, 0, strlen(result->data));
+	memset(result->data, 0, VARHDRSZ + len);
 	SET_VARSIZE(result, VARHDRSZ + len);
 	memcpy(result->data, new_str, strlen(new_str));
 	// PG_RETURN_POINTER(result);

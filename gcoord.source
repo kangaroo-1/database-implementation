@@ -145,6 +145,12 @@ CREATE OPERATOR ~ (
    restrict = eqsel, join = eqjoinsel
 );
 
+CREATE OPERATOR !~ (
+   leftarg = geocoord, rightarg = geocoord, procedure = geocoord_tz_ne,
+   commutator = !~,
+   restrict = eqsel, join = eqjoinsel
+);
+
 
 -- create the support function too
 CREATE FUNCTION geocoord_cmp(GeoCoord, GeoCoord) RETURNS int4
@@ -154,7 +160,7 @@ CREATE FUNCTION geocoord_cmp(GeoCoord, GeoCoord) RETURNS int4
 CREATE FUNCTION convert2dms(GeoCoord) RETURNS text
    AS '_OBJWD_/gcoord' LANGUAGE C IMMUTABLE STRICT;
 
-SELECT convert2dms('sydney,33.86°S,151.21°E');
+
 
 -- now we can make the operator class
 CREATE OPERATOR CLASS geocoord_op
