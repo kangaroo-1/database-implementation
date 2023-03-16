@@ -556,18 +556,17 @@ convert2dms(PG_FUNCTION_ARGS)
 	char *ptr;
 
 	//for DMS calculation
-	float a_latitude_d;
-	float a_latitude_m;
-	float a_latitude_s;
-	float floor_a_latitude_m;
-	float floor_a_latitude_s;
+	int a_latitude_d;
+	float temp_a_latitude_m;
+	int a_latitude_m;
+	float temp_a_latitude_s;
+	int a_latitude_s;
 
-
-	float a_longtitude_d;
-	float a_longtitude_m;
-	float floor_a_longtitude_m;
-	float a_longtitude_s;
-	float floor_a_longtitude_s;
+	int a_longtitude_d;
+	float temp_a_longtitude_m;
+	int a_longtitude_m;
+	float temp_a_longtitude_s;
+	int a_longtitude_s;
 
 	char a_latitude_d_buffer[10];
 	char a_latitude_m_buffer[10];
@@ -649,39 +648,39 @@ convert2dms(PG_FUNCTION_ARGS)
 
 	//DMS calculation
 	a_latitude_d = floor(a_latitude_value);
-	a_latitude_m = (60 * fabs(a_latitude_value - a_latitude_d));
-	floor_a_latitude_m = floor(a_latitude_m);
-	a_latitude_s = (3600 * fabs(a_latitude_value - a_latitude_d) - 60 * floor_a_latitude_m);
-	floor_a_latitude_s = floor(a_latitude_s);
-	if (floor_a_latitude_s == -1) {
-		floor_a_latitude_s = 0;
+	temp_a_latitude_m = 60 * fabs(a_latitude_value - a_latitude_d);
+	a_latitude_m = floor(temp_a_latitude_m);
+	temp_a_latitude_s = (3600 * fabs(a_latitude_value - a_latitude_d) - 60 * a_latitude_m);
+	a_latitude_s = floor(temp_a_latitude_s);
+	if (a_latitude_s == -1) {
+		a_latitude_s = 0;
 	}
 
 
 	a_longtitude_d = floor(a_longtitude_value);
-	a_longtitude_m = (60 * fabs(a_longtitude_value - a_longtitude_d));
-	floor_a_longtitude_m = floor(a_longtitude_m);
-	a_longtitude_s = (3600 * fabs(a_longtitude_value - a_longtitude_d) - 60 * floor_a_longtitude_m);
-	floor_a_longtitude_s = floor(a_longtitude_s);
-	if (floor_a_longtitude_s == -1) {
-		floor_a_longtitude_s = 0;
+	temp_a_longtitude_m = (60 * fabs(a_longtitude_value - a_longtitude_d));
+	a_longtitude_m = floor(temp_a_longtitude_m);
+	temp_a_longtitude_s = (3600 * fabs(a_longtitude_value - a_longtitude_d) - 60 * a_longtitude_m);
+	a_longtitude_s = floor(temp_a_longtitude_s);
+	if (a_longtitude_s == -1) {
+		a_longtitude_s = 0;
 	}
 	
 	//strcat latitude string
 	strcat(new_str, a_location);
 	strcat(new_str, ",");
-	snprintf(a_latitude_d_buffer, 10, "%.4f", a_latitude_d);
+	snprintf(a_latitude_d_buffer, 10, "%d", a_latitude_d);
 	strcat(new_str, a_latitude_d_buffer);
 	strcat(new_str, "°");
 
-	if (floor_a_latitude_m != 0) {
-		snprintf(a_latitude_m_buffer, 10, "%.4f", floor_a_latitude_m);
+	if (a_latitude_m != 0) {
+		snprintf(a_latitude_m_buffer, 10, "%d", a_latitude_m);
 		strcat(new_str, a_latitude_m_buffer);
 		strcat(new_str, "\'");
 	}
 
-	if (floor_a_latitude_s != 0) {
-		snprintf(a_latitude_s_buffer, 10, "%f", floor_a_latitude_s);
+	if (a_latitude_s != 0) {
+		snprintf(a_latitude_s_buffer, 10, "%d", a_latitude_s);
 		strcat(new_str, a_latitude_s_buffer);
 		strcat(new_str, "\"");
 	}
@@ -696,17 +695,17 @@ convert2dms(PG_FUNCTION_ARGS)
 	strcat(new_str, ",");
 
 	//strcat longtitude string
-	snprintf(a_longtitude_d_buffer, 10, "%.4f", a_longtitude_d);
+	snprintf(a_longtitude_d_buffer, 10, "%d", a_longtitude_d);
 	strcat(new_str, a_longtitude_d_buffer);
 	strcat(new_str, "°");
-	if (floor_a_longtitude_m != 0) {
-		snprintf(a_longtitude_m_buffer, 10, "%.4f", floor_a_longtitude_m);
+	if (a_longtitude_m != 0) {
+		snprintf(a_longtitude_m_buffer, 10, "%d", a_longtitude_m);
 		strcat(new_str, a_longtitude_m_buffer);
 		strcat(new_str, "\'");
 	}
 
-	if (floor_a_longtitude_s != 0) {
-		snprintf(a_longtitude_s_buffer, 10, "%.4f", floor_a_longtitude_s);
+	if (a_longtitude_s != 0) {
+		snprintf(a_longtitude_s_buffer, 10, "%d", a_longtitude_s);
 		strcat(new_str, a_longtitude_s_buffer);
 		strcat(new_str, "\"");
 	}
