@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include "fmgr.h"
+#include <regex.h>
 #include "libpq/pqformat.h"		/* needed for send/recv functions */
 
 PG_MODULE_MAGIC;
@@ -31,6 +32,135 @@ typedef struct GeoCoord
  *****************************************************************************/
 
 //helper function to check if the inputs are valid
+char* inputValid(char *str);
+char* inputValid(char *str) {
+	char location[256];
+	char rest[200];
+	char str1[100];
+	char str2[100];
+	double latitude,longtitude;
+	int i;
+	int index1;
+	int index2;
+	int flag;
+    char *regex_pattern;
+	regex_t regex;
+	char *ptr;
+	char *result;
+	bool valid = true;
+	char new_str[500];
+	regex_pattern = "(-?)(0|([1-9][0-9]*))(\\.[0-9]+)?.(-?)(0|([1-9][0-9]*))(\\.[0-9]+)?°[S|N|W|E][,|" "](-?)(0|([1-9][0-9]*))(\\.[0-9]+)?.(-?)(0|([1-9][0-9]*))(\\.[0-9]+)?°[S|N|W|E]";
+	i = 0;
+	index1 = 0;
+	index2 = 0;
+	result = malloc(sizeof(char) * 500);
+	memset(result, 0, sizeof(char) * 500);
+	memset(new_str, 0, sizeof(char) * 500);
+	memset(location, 0, sizeof(char) * 256);
+	memset(rest, 0, sizeof(char) * 200);
+	memset(str1, 0, sizeof(char) * 100);
+	memset(str2, 0, sizeof(char) * 100);
+	//extract location string
+	while (str[i] != '\0') {
+        if (str[i] == ',') {
+			index1 = i;
+            break;
+        }
+        i++;
+    }
+    
+    if (i == 0) {
+        valid = false;
+    }
+
+	strncpy(location, str + 0, index1- 0);
+	//check if location string is valid
+	 if (location[0] == ' ' || location[strlen(location) - 1] == ' ') {
+        valid = false;
+    }
+
+	i = 0;
+    while (location[i] != '\0') {
+        if (location[i] != ' ' && isalpha(location[i]) == 0) {
+             valid = false;
+        }
+        i++;
+    }
+
+	//extract langtitude and longtitude string
+	strncpy(rest, str + index1 + 1 , strlen(str) - index1);
+	flag = regcomp(&regex, regex_pattern, REG_EXTENDED | REG_NOSUB);
+	if (flag == 0) {
+		if (!regexec(&regex, rest, 0, NULL, 0)){
+			valid = true;
+		}
+		else {
+			 valid = false;
+		}
+	}
+	regfree(&regex);
+	
+	i = 0;
+	while (rest[i] != '\0') {
+		if (rest[i] == ' ' || rest[i] == ',') {
+			index2 = i;
+			break;
+		}
+		i++;
+	}
+
+	strncpy(str1, rest + 0, index2 - 0);
+	strncpy(str2, rest + index2 + 1, strlen(rest) - index2);
+	if(strchr(str1, 'S') != NULL || strchr(str1, 'N') != NULL) {
+        //str1 contains latitude
+		latitude = strtod(str1, &ptr);
+		longtitude = strtod(str2, &ptr);
+		if (latitude > 90 || latitude < 0 || longtitude > 180 || longtitude < 0) {
+				valid = false;
+		}
+		else {
+			strcat(new_str, location);
+			strcat(new_str, ",");
+			strcat(new_str, str1);
+			strcat(new_str, ",");
+			strcat(new_str, str2);
+			
+			
+		}
+    }
+	else {
+		//str1 contains longtitudes
+		latitude = strtod(str2, &ptr);
+		longtitude = strtod(str1, &ptr);
+		if (latitude > 90 || latitude < 0 || longtitude > 180 || longtitude < 0) {
+			valid = false;		
+		}
+		else {
+			strcat(new_str, location);
+			strcat(new_str, ",");
+			strcat(new_str, str2);
+			strcat(new_str, ",");
+			strcat(new_str, str1);
+			elog(NOTICE, "new_str: %s", new_str);
+			
+		}
+
+	}
+
+	if (valid == false) {
+		strcpy(result, "false");
+	}
+	else {
+		strcpy(result, new_str);
+	}
+	return result;
+	
+	
+}
+
+
+
+
 
 
 
@@ -46,14 +176,22 @@ geocoord_in(PG_FUNCTION_ARGS)
 	char *str = PG_GETARG_CSTRING(0);
 	
 	//check the inputs and error handling
+	GeoCoord *result;
+	char *str_valid;
+	int len;
+
+	str_valid = inputValid(str);
+	// elog(NOTICE, "str_valid: %s", str_valid);
 
 
-	int len = strlen(str) + 1;
-	GeoCoord *result = (GeoCoord *) palloc(VARHDRSZ + len);
+
+	len = strlen(str) + 1;
+	result = (GeoCoord *) palloc(VARHDRSZ + len);
+
 
 	memset(result->data, 0, VARHDRSZ + len);
 	SET_VARSIZE(result, VARHDRSZ + len);
-	memcpy(result->data, str, strlen(str));
+	memcpy(result->data, str_valid, strlen(str_valid));
 	// elog(NOTICE, "%s", result->data);
 	PG_RETURN_POINTER(result);
 }

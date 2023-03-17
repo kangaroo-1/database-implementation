@@ -76,7 +76,7 @@ CREATE TABLE test_complex (
 -- data for user-defined types are just strings in the proper textual
 -- representation.
 
-
+INSERT INTO test_complex(id, a) VALUES (1, 'Melbourne,144.95°E,37.84°S');
 SELECT * FROM test_complex;
 
 -----------------------------
@@ -106,6 +106,8 @@ CREATE FUNCTION geocoord_le(geocoord, geocoord) RETURNS bool
 CREATE FUNCTION geocoord_tz(geocoord, geocoord) RETURNS bool
    AS '/localstorage/z5290566/postgresql-15.1/src/tutorial/gcoord' LANGUAGE C IMMUTABLE STRICT;
 
+CREATE FUNCTION geocoord_tz_ne(geocoord, geocoord) RETURNS bool
+   AS '/localstorage/z5290566/postgresql-15.1/src/tutorial/gcoord' LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OPERATOR = (
    leftarg = geocoord, rightarg = geocoord, procedure = geocoord_eq,
@@ -145,6 +147,12 @@ CREATE OPERATOR ~ (
    restrict = eqsel, join = eqjoinsel
 );
 
+CREATE OPERATOR !~ (
+   leftarg = geocoord, rightarg = geocoord, procedure = geocoord_tz_ne,
+   commutator = !~,
+   restrict = eqsel, join = eqjoinsel
+);
+
 
 -- create the support function too
 CREATE FUNCTION geocoord_cmp(GeoCoord, GeoCoord) RETURNS int4
@@ -154,7 +162,7 @@ CREATE FUNCTION geocoord_cmp(GeoCoord, GeoCoord) RETURNS int4
 CREATE FUNCTION convert2dms(GeoCoord) RETURNS text
    AS '/localstorage/z5290566/postgresql-15.1/src/tutorial/gcoord' LANGUAGE C IMMUTABLE STRICT;
 
-SELECT convert2dms('sydney,33.86°S,151.21°E');
+
 
 -- now we can make the operator class
 CREATE OPERATOR CLASS geocoord_op
@@ -164,7 +172,6 @@ CREATE OPERATOR CLASS geocoord_op
         OPERATOR        3       = ,
         OPERATOR        4       >= ,
         OPERATOR        5       > ,
-        OPERATOR        5       !~ ,
         FUNCTION        1       geocoord_cmp(GeoCoord, GeoCoord);
 
 
