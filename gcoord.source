@@ -76,7 +76,7 @@ CREATE TABLE test_complex (
 -- data for user-defined types are just strings in the proper textual
 -- representation.
 
-INSERT INTO test_complex(id, a) VALUES (1, 'Melbourne,144.95°E,37.84°S');
+INSERT INTO test_complex(id, a) VALUES (1, 'Melbourne,37.84S,144.95E');
 SELECT * FROM test_complex;
 
 -----------------------------

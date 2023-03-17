@@ -181,7 +181,12 @@ geocoord_in(PG_FUNCTION_ARGS)
 	int len;
 
 	str_valid = inputValid(str);
-	// elog(NOTICE, "str_valid: %s", str_valid);
+	if (strcmp(str_valid, "false") == 0) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"geocoord", str)));
+	}
 
 
 
