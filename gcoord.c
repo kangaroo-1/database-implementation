@@ -16,6 +16,7 @@
 #include "fmgr.h"
 #include <regex.h>
 #include "libpq/pqformat.h"		/* needed for send/recv functions */
+#include "access/hash.h"
 
 PG_MODULE_MAGIC;
 
@@ -49,7 +50,7 @@ char* inputValid(char *str) {
 	char *result;
 	bool valid = true;
 	char new_str[500];
-	regex_pattern = "(-?)(0|([1-9][0-9]*))(\\.[0-9]+)?.(-?)(0|([1-9][0-9]*))(\\.[0-9]+)?°[S|N|W|E][,|" "](-?)(0|([1-9][0-9]*))(\\.[0-9]+)?.(-?)(0|([1-9][0-9]*))(\\.[0-9]+)?°[S|N|W|E]";
+	regex_pattern = "^[+-]?([0-9]*[.])?[0-9]+°[S|N|W|E][,| ][+-]?([0-9]*[.])?[0-9]+°[S|N|W|E]$";
 	i = 0;
 	index1 = 0;
 	index2 = 0;
@@ -75,8 +76,10 @@ char* inputValid(char *str) {
 
 	strncpy(location, str + 0, index1- 0);
 	//check if location string is valid
-	 if (location[0] == ' ' || location[strlen(location) - 1] == ' ') {
+	
+	if (location[0] == ' ' || location[strlen(location) - 1] == ' ') {
         valid = false;
+		// elog(NOTICE, "here!");
     }
 
 	i = 0;
@@ -89,13 +92,15 @@ char* inputValid(char *str) {
 
 	//extract langtitude and longtitude string
 	strncpy(rest, str + index1 + 1 , strlen(str) - index1);
+	// elog(NOTICE, "%s", rest);
 	flag = regcomp(&regex, regex_pattern, REG_EXTENDED | REG_NOSUB);
 	if (flag == 0) {
 		if (!regexec(&regex, rest, 0, NULL, 0)){
-			valid = true;
+			// valid = true;
 		}
 		else {
 			 valid = false;
+			//  elog(NOTICE, "%s", rest);
 		}
 	}
 	regfree(&regex);
@@ -141,7 +146,7 @@ char* inputValid(char *str) {
 			strcat(new_str, str2);
 			strcat(new_str, ",");
 			strcat(new_str, str1);
-			elog(NOTICE, "new_str: %s", new_str);
+			// elog(NOTICE, "new_str: %s", new_str);
 			
 		}
 
@@ -185,7 +190,7 @@ geocoord_in(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
-						"geocoord", str)));
+						"GeoCoord", str)));
 	}
 
 
@@ -562,6 +567,18 @@ geocoord_le(PG_FUNCTION_ARGS)
 }
 
 
+PG_FUNCTION_INFO_V1(geocoord_ne);
+Datum
+geocoord_ne(PG_FUNCTION_ARGS)
+{
+	GeoCoord    *a = (GeoCoord *) PG_GETARG_POINTER(0);
+	GeoCoord    *b = (GeoCoord *) PG_GETARG_POINTER(1);
+
+
+	PG_RETURN_BOOL(geocoord_cmp_internal(a, b) != 0);
+}
+
+
 
 //time zone ~
 PG_FUNCTION_INFO_V1(geocoord_tz);
@@ -671,6 +688,8 @@ geocoord_tz_ne(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(a_floor != b_floor);
 }
+
+
 
 PG_FUNCTION_INFO_V1(convert2dms);
 
@@ -870,4 +889,17 @@ convert2dms(PG_FUNCTION_ARGS)
 	memcpy(result->data, new_str, strlen(new_str));
 	// PG_RETURN_POINTER(result);
 	PG_RETURN_TEXT_P(result);
+}
+
+
+PG_FUNCTION_INFO_V1(geocoord_hash);
+Datum
+geocoord_hash(PG_FUNCTION_ARGS)
+{
+	GeoCoord *record = (GeoCoord *) PG_GETARG_POINTER(0);
+	int hash;
+	
+	hash = DatumGetUInt32(hash_any((unsigned char *) record->data, strlen(record->data)));
+	
+	PG_RETURN_INT32(hash);
 }

@@ -109,11 +109,13 @@ CREATE FUNCTION geocoord_tz(geocoord, geocoord) RETURNS bool
 CREATE FUNCTION geocoord_tz_ne(geocoord, geocoord) RETURNS bool
    AS '/localstorage/z5290566/postgresql-15.1/src/tutorial/gcoord' LANGUAGE C IMMUTABLE STRICT;
 
+CREATE FUNCTION geocoord_ne(geocoord, geocoord) RETURNS bool
+   AS '/localstorage/z5290566/postgresql-15.1/src/tutorial/gcoord' LANGUAGE C IMMUTABLE STRICT;
+
+
 CREATE OPERATOR = (
    leftarg = geocoord, rightarg = geocoord, procedure = geocoord_eq,
-   commutator = = ,
-   -- leave out negator since we didn't create <> operator
-   -- negator = <> ,
+   commutator = = , negator = <> ,
    restrict = eqsel, join = eqjoinsel
 );
 
@@ -150,6 +152,12 @@ CREATE OPERATOR ~ (
 CREATE OPERATOR !~ (
    leftarg = geocoord, rightarg = geocoord, procedure = geocoord_tz_ne,
    commutator = !~,
+   restrict = eqsel, join = eqjoinsel
+);
+
+CREATE OPERATOR <> (
+   leftarg = geocoord, rightarg = geocoord, procedure = geocoord_ne,
+  commutator = <> , negator = =,
    restrict = eqsel, join = eqjoinsel
 );
 
