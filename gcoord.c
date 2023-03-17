@@ -79,7 +79,6 @@ char* inputValid(char *str) {
 	
 	if (location[0] == ' ' || location[strlen(location) - 1] == ' ') {
         valid = false;
-		// elog(NOTICE, "here!");
     }
 
 	i = 0;
@@ -92,7 +91,6 @@ char* inputValid(char *str) {
 
 	//extract langtitude and longtitude string
 	strncpy(rest, str + index1 + 1 , strlen(str) - index1);
-	// elog(NOTICE, "%s", rest);
 	flag = regcomp(&regex, regex_pattern, REG_EXTENDED | REG_NOSUB);
 	if (flag == 0) {
 		if (!regexec(&regex, rest, 0, NULL, 0)){
@@ -100,7 +98,6 @@ char* inputValid(char *str) {
 		}
 		else {
 			 valid = false;
-			//  elog(NOTICE, "%s", rest);
 		}
 	}
 	regfree(&regex);
@@ -146,7 +143,6 @@ char* inputValid(char *str) {
 			strcat(new_str, str2);
 			strcat(new_str, ",");
 			strcat(new_str, str1);
-			// elog(NOTICE, "new_str: %s", new_str);
 			
 		}
 
@@ -164,6 +160,98 @@ char* inputValid(char *str) {
 }
 
 
+
+char* hash_helper(char *str);
+char* hash_helper(char *str) {
+	char location[256];
+	char new_location[256];
+	char pre_latitude[20];
+	char pre_longtitude[20];
+	double latitude,longtitude;
+	char new_latitude[20];
+	char new_longtitude[20];
+	int i;
+	int index1;
+	int index2;
+	
+	char *result;
+	char new_str[500];
+	char *ptr;
+	i = 0;
+	index1 = 0;
+	index2 = 0;
+	result = malloc(sizeof(char) * 500);
+	memset(result, 0, sizeof(char) * 500);
+	memset(new_str, 0, sizeof(char) * 500);
+	memset(location, 0, sizeof(char) * 256);
+	memset(new_location, 0, sizeof(char) * 256);
+	memset(pre_latitude, 0, sizeof(char) * 20);
+	memset(pre_longtitude, 0, sizeof(char) * 20);
+	memset(new_latitude, 0, sizeof(char) * 20);
+	memset(new_longtitude, 0, sizeof(char) * 20);
+
+
+	//extract location string
+	while (str[i] != '\0') {
+        if (str[i] == ',') {
+			index1 = i;
+            break;
+        }
+        i++;
+    }
+	strncpy(location, str + 0, index1 - 0);
+	
+	//convert location string to lowercase
+	i = 0;
+	while (location[i] != '\0') {
+		location[i] = tolower(location[i]);
+		i++;
+	}
+	strcat(new_str, location);
+	
+	i = index1 + 1;
+
+	//extract langtitude and longtitude string
+	while (str[i] != '\0') {
+		if (str[i] == ' ' || str[i] == ',') {
+			index2 = i;
+			break;
+		}
+		i++;
+	}
+
+	strncpy(pre_latitude, str + index1 + 1, index2 - index1 - 1);
+	strncpy(pre_longtitude, str + index2 + 1, strlen(str) - index2);
+	latitude = strtod(pre_latitude, &ptr);
+	snprintf(new_latitude, 20, "%.4f", latitude);
+	longtitude = strtod(pre_longtitude, &ptr);
+	snprintf(new_longtitude, 20, "%.4f", longtitude);
+
+	if (strchr(pre_latitude, 'S') != NULL) {
+		strcat(new_str, new_latitude);
+		strcat(new_str, "S");
+
+	}
+	else {
+		strcat(new_str, new_latitude);
+		strcat(new_str, "N");
+	}
+
+
+	if (strchr(pre_longtitude, 'E') != NULL) {
+		strcat(new_str, new_longtitude);
+		strcat(new_str, "E");
+	}
+	else {
+		strcat(new_str, new_longtitude);
+		strcat(new_str, "W");
+	}
+
+	strcpy(result, new_str);
+	return result;
+	
+	
+}
 
 
 
@@ -197,12 +285,9 @@ geocoord_in(PG_FUNCTION_ARGS)
 
 	len = strlen(str) + 1;
 	result = (GeoCoord *) palloc(VARHDRSZ + len);
-
-
 	memset(result->data, 0, VARHDRSZ + len);
 	SET_VARSIZE(result, VARHDRSZ + len);
 	memcpy(result->data, str_valid, strlen(str_valid));
-	// elog(NOTICE, "%s", result->data);
 	PG_RETURN_POINTER(result);
 }
 
@@ -220,72 +305,18 @@ geocoord_out(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
+
+
 /*****************************************************************************
- * Binary Input/Output functions
+ * Operator class for defining B-tree index
  *
- * These are optional.
+ * It's essential that the comparison operators and support function for a
+ * B-tree index opclass always agree on the relative ordering of any two
+ * data values.  Experience has shown that it's depressingly easy to write
+ * unintentionally inconsistent functions.  One way to reduce the odds of
+ * making a mistake is to make all the functions simple wrappers around
+ * an internal three-way-comparison function, as we do here.
  *****************************************************************************/
-
-// PG_FUNCTION_INFO_V1(complex_recv);
-
-// Datum
-// complex_recv(PG_FUNCTION_ARGS)
-// {
-// 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-// 	Complex    *result;
-
-// 	result = (Complex *) palloc(sizeof(Complex));
-// 	result->x = pq_getmsgfloat8(buf);
-// 	result->y = pq_getmsgfloat8(buf);
-// 	PG_RETURN_POINTER(result);
-// }
-
-// PG_FUNCTION_INFO_V1(complex_send);
-
-// Datum
-// complex_send(PG_FUNCTION_ARGS)
-// {
-// 	Complex    *complex = (Complex *) PG_GETARG_POINTER(0);
-// 	StringInfoData buf;
-
-// 	pq_begintypsend(&buf);
-// 	pq_sendfloat8(&buf, complex->x);
-// 	pq_sendfloat8(&buf, complex->y);
-// 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
-// }
-
-// /*****************************************************************************
-//  * New Operators
-//  *
-//  * A practical Complex datatype would provide much more than this, of course.
-//  *****************************************************************************/
-
-// PG_FUNCTION_INFO_V1(complex_add);
-
-// Datum
-// complex_add(PG_FUNCTION_ARGS)
-// {
-// 	Complex    *a = (Complex *) PG_GETARG_POINTER(0);
-// 	Complex    *b = (Complex *) PG_GETARG_POINTER(1);
-// 	Complex    *result;
-
-// 	result = (Complex *) palloc(sizeof(Complex));
-// 	result->x = a->x + b->x;
-// 	result->y = a->y + b->y;
-// 	PG_RETURN_POINTER(result);
-// }
-
-
-// /*****************************************************************************
-//  * Operator class for defining B-tree index
-//  *
-//  * It's essential that the comparison operators and support function for a
-//  * B-tree index opclass always agree on the relative ordering of any two
-//  * data values.  Experience has shown that it's depressingly easy to write
-//  * unintentionally inconsistent functions.  One way to reduce the odds of
-//  * making a mistake is to make all the functions simple wrappers around
-//  * an internal three-way-comparison function, as we do here.
-//  *****************************************************************************/
 
 static int
 geocoord_cmp_internal(GeoCoord * a, GeoCoord * b)
@@ -887,7 +918,6 @@ convert2dms(PG_FUNCTION_ARGS)
 	memset(result->data, 0, VARHDRSZ + len);
 	SET_VARSIZE(result, VARHDRSZ + len);
 	memcpy(result->data, new_str, strlen(new_str));
-	// PG_RETURN_POINTER(result);
 	PG_RETURN_TEXT_P(result);
 }
 
@@ -898,8 +928,9 @@ geocoord_hash(PG_FUNCTION_ARGS)
 {
 	GeoCoord *record = (GeoCoord *) PG_GETARG_POINTER(0);
 	int hash;
-	
-	hash = DatumGetUInt32(hash_any((unsigned char *) record->data, strlen(record->data)));
+	char *hash_str;
+	hash_str = hash_helper(record->data);
+	hash = DatumGetUInt32(hash_any((unsigned char *) hash_str, strlen(hash_str)));
 	
 	PG_RETURN_INT32(hash);
 }

@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------
 --
--- complex.sql-
+-- gcoord.sql-
 --    This file shows how to create a new user-defined type and how to
 --    use this new type.
 --
@@ -14,23 +14,23 @@
 
 -----------------------------
 -- Creating a new type:
---	We are going to create a new type called 'complex' which represents
---	complex numbers.
+--	We are going to create a new type called 'geocoord' which represents
+--	geographical Coordinates
 --	A user-defined type must have an input and an output function, and
 --	optionally can have binary input and output functions.  All of these
 --	are usually user-defined C functions.
 -----------------------------
 
--- Assume the user defined functions are in _OBJWD_/complex$DLSUFFIX
+-- Assume the user defined functions are in _OBJWD_/gcoord$DLSUFFIX
 -- (we do not want to assume this is in the dynamic loader search path).
--- Look at $PWD/complex.c for the source.  Note that we declare all of
+-- Look at $PWD/gcoord.c for the source.  Note that we declare all of
 -- them as STRICT, so we do not need to cope with NULL inputs in the
 -- C code.  We also mark them IMMUTABLE, since they always return the
 -- same outputs given the same inputs.
 
 -- the input function 'geocoord_in' takes a null-terminated string (the
 -- textual representation of the type) and turns it into the internal
--- (in memory) representation. You will get a message telling you 'complex'
+-- (in memory) representation. You will get a message telling you 'geocoord'
 -- does not exist yet but that's okay.
 
 
@@ -61,20 +61,7 @@ CREATE TYPE geocoord (
 );
 
 
------------------------------
--- Using the new type:
---	user-defined types can be used like ordinary built-in types.
------------------------------
 
--- eg. we can use it in a table
-
-CREATE TABLE test_complex (
-	id integer primary key,
-	a geocoord
-);
-
--- data for user-defined types are just strings in the proper textual
--- representation.
 
 
 
@@ -194,7 +181,3 @@ CREATE OPERATOR CLASS geocoord_hash
 
 
 
-
-
-
--- clean up the example
